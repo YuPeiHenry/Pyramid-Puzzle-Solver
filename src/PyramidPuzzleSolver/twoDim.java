@@ -35,12 +35,12 @@ public class twoDim {
             if (used[i]) {
                 continue;
             }
-            for (int orient = 0; orient < SHAPES_ON_BOARD[i].numOrients; orient++) {
-                for (int center = 0; center < SHAPES_ON_BOARD[i].numBlocks; center++) {
+            for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
+                for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
                     boolean pass = true;
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].numBlocks; block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].layouts[center][block * 2];
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].layouts[center][block * 2 + 1];
+                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
+                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
+                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
                         if (newX < 0 || newY < 0 || newX + newY >= field.length || field[newX][newY] > 0) {
                             pass = false;
                             break;
@@ -49,32 +49,32 @@ public class twoDim {
                     if (!pass) {
                         continue;
                     }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].numBlocks; block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].layouts[center][block * 2];
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].layouts[center][block * 2 + 1];
+                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
+                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
+                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
                         field[newX][newY] = i + 1;
                     }
                     used[i] = true;
                     if (solve(field, used)) {
                         return true;
                     }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].numBlocks; block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].layouts[center][block * 2];
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].layouts[center][block * 2 + 1];
+                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
+                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
+                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
                         field[newX][newY] = 0;
                     }
                     used[i] = false;
                 }
             }
-            if (!SHAPES_ON_BOARD[i].XYswap) {
+            if (!SHAPES_ON_BOARD[i].getIsXyFlipped()) {
                 continue;
             }
-            for (int orient = 0; orient < SHAPES_ON_BOARD[i].numOrients; orient++) {
-                for (int center = 0; center < SHAPES_ON_BOARD[i].numBlocks; center++) {
+            for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
+                for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
                     boolean pass = true;
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].numBlocks; block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].layouts[center][block * 2];
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].layouts[center][block * 2 + 1];
+                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
+                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
+                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
                         if (newX < 0 || newY < 0 || newX + newY >= field.length || field[newX][newY] > 0) {
                             pass = false;
                             break;
@@ -83,18 +83,18 @@ public class twoDim {
                     if (!pass) {
                         continue;
                     }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].numBlocks; block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].layouts[center][block * 2];
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].layouts[center][block * 2 + 1];
+                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
+                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
+                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
                         field[newX][newY] = i + 1;
                     }
                     used[i] = true;
                     if (solve(field, used)) {
                         return true;
                     }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].numBlocks; block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].layouts[center][block * 2];
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].layouts[center][block * 2 + 1];
+                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
+                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
+                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
                         field[newX][newY] = 0;
                     }
                     used[i] = false;
@@ -116,7 +116,7 @@ public class twoDim {
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                result.on = !result.on;
+                result.toggleNode();
                 result.repaint();
                 if (field[s][t] == 0) {
                     field[s][t] = 99;
@@ -132,10 +132,8 @@ public class twoDim {
 
     private static colorPanel makeSelection(int x, int y, boolean[] used, int i) {
         colorPanel result = new colorPanel();
-        result.on = true;
-        result.red = SHAPES_ON_BOARD[i].R;
-        result.green = SHAPES_ON_BOARD[i].G;
-        result.blue = SHAPES_ON_BOARD[i].B;
+        result.setNodeIsOn(true);
+        result.setColor(SHAPES_ON_BOARD[i].getColor());
         result.setBounds(x, y, 40, 40);
         JButton button = new JButton();
         button.setBorderPainted(false);
@@ -146,7 +144,7 @@ public class twoDim {
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                result.on = !result.on;
+                result.toggleNode();
                 result.repaint();
                 used[i] = !used[i];
             }
@@ -169,10 +167,8 @@ public class twoDim {
                     for (int s = 0; s < solution.length; s++) {
                         for (int t = 0; s + t < solution.length; t++) {
                             if (field[s][t] < 99 && field[s][t] > 0) {
-                                solution[s][t].red = SHAPES_ON_BOARD[field[s][t] - 1].R;
-                                solution[s][t].green = SHAPES_ON_BOARD[field[s][t] - 1].G;
-                                solution[s][t].blue = SHAPES_ON_BOARD[field[s][t] - 1].B;
-                                solution[s][t].on = true;
+                                solution[s][t].setColor(SHAPES_ON_BOARD[field[s][t] - 1].getColor());
+                                solution[s][t].setNodeIsOn(true);
                                 solution[s][t].repaint();
                             }
                         }

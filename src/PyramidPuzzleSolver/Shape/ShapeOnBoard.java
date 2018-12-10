@@ -1,22 +1,45 @@
 package PyramidPuzzleSolver.Shape;
 
+import java.awt.Color;
+
 /**
- * Represents a shape that can be placed on the game board.
+ * Represents a shape that can be placed isOn the game board.
  */
 public class ShapeOnBoard {
-    public int R, G, B;
-    public int numOrients;
-    public int numBlocks;
-    public boolean XYswap;
+    private final Color color;
+    private final int numOrients;
+    private final int numBlocks;
+    private final boolean isXyFlipped;
     //[numBlocks][numBlocks * 2]
-    public int[][] layouts = null;
-    public ShapeOnBoard(int R, int G, int B, int numOrients, int numBlocks, boolean XYswap, int[][] layouts) {
-        this.R = R;
-        this.G = G;
-        this.B = B;
+    private final int[][] layouts;
+
+    public ShapeOnBoard(int red, int green, int blue, int numOrients, int numBlocks, boolean isXyFlipped,
+                        int[][] layouts) {
+        color = new Color(red, green, blue);
         this.numOrients = numOrients;
         this.numBlocks = numBlocks;
-        this.XYswap = XYswap;
+        this.isXyFlipped = isXyFlipped;
         this.layouts = layouts;
     }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public int getNumOrients() {
+        return numOrients;
+    }
+
+    public int getNumBlocks() {
+        return numBlocks;
+    }
+
+    public boolean getIsXyFlipped() {
+        return isXyFlipped;
+    }
+
+    public int getBlockOffset(int position, int block) {
+        return layouts[position][block];
+    }
+
 }
