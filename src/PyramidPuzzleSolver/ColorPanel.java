@@ -11,7 +11,7 @@ import javax.swing.JPanel;
 /**
  * Acts as a single circle that can be switched isOn or off isOn click, to create the game board.
  */
-public class colorPanel extends JPanel {
+public class ColorPanel extends JPanel {
     public static final Color WHITE = new Color(255, 255, 255);
     public static final Color BLACK = new Color(0, 0, 0);
 

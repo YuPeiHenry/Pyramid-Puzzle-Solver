@@ -1,6 +1,5 @@
 package PyramidPuzzleSolver;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,7 +11,12 @@ import javax.swing.JPanel;
 import static PyramidPuzzleSolver.Shape.TypesOfShapes.SHAPES_ON_BOARD;
 import static PyramidPuzzleSolver.Shape.TypesOfShapes.ROTATION;
 
-public class twoDim {
+import PyramidPuzzleSolver.Shape.UiUtil;
+
+public class TwoDim {
+    private static final int BUTTON_SIZE = 40;
+    private static final int TRIANGLE_BOARD_WIDTH = 10;
+
     //i = 0 ...
     //i = 1 ..
     //i = 2 .
@@ -104,62 +108,30 @@ public class twoDim {
         return false;
     }
 
-    private static colorPanel makeButton(int x, int y, int[][] field, int s, int t) {
-        colorPanel result = new colorPanel();
-        result.setBounds(x, y, 40, 40);
-        JButton button = new JButton();
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setOpaque(false);
-        button.setContentAreaFilled(false);
-        button.setPreferredSize(new Dimension(40, 40));
-        button.addActionListener(new ActionListener() {
+    private static ActionListener getToggleAction(ColorPanel toggleableButton, int[][] field, int s, int t) {
+        return new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                result.toggleNode();
-                result.repaint();
+                toggleableButton.toggleNode();
+                toggleableButton.repaint();
                 if (field[s][t] == 0) {
                     field[s][t] = 99;
                 } else {
                     field[s][t] = 0;
                 }
             }
-        });
-        result.add(button);
-
-        return result;
+        };
     }
 
-    private static colorPanel makeSelection(int x, int y, boolean[] used, int i) {
-        colorPanel result = new colorPanel();
-        result.setNodeIsOn(true);
-        result.setColor(SHAPES_ON_BOARD[i].getColor());
-        result.setBounds(x, y, 40, 40);
-        JButton button = new JButton();
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setOpaque(false);
-        button.setContentAreaFilled(false);
-        button.setPreferredSize(new Dimension(40, 40));
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                result.toggleNode();
-                result.repaint();
-                used[i] = !used[i];
-            }
-        });
-        result.add(button);
-
-        return result;
+    private static ColorPanel makeToggleableButton(int buttonX, int buttonY, int[][] field, int s, int t) {
+        ColorPanel toggleableButton = new ColorPanel();
+        ActionListener toggleAction = getToggleAction(toggleableButton, field, s, t);
+        UiUtil.setToggleableButtonProperties(BUTTON_SIZE, buttonX, buttonY, toggleableButton, toggleAction);
+        return toggleableButton;
     }
 
-    private static JPanel solveButton(int x, int y, int[][] field, boolean[] used, colorPanel[][] solution) {
-        JPanel result = new JPanel();
-        result.setBounds(x, y, 120, 40);
-        JButton button = new JButton("Solve");
-        button.setPreferredSize(new Dimension(120, 40));
-        button.addActionListener(new ActionListener() {
+    private static ActionListener getSolverAction(ColorPanel[][] solution, int[][] field, boolean[] used) {
+        return new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (solve(field, used)) {
@@ -177,10 +149,14 @@ public class twoDim {
                     System.out.println("FAIL");
                 }
             }
-        });
-        result.add(button);
+        };
+    }
 
-        return result;
+    private static JPanel makeSolveButton(int buttonX, int buttonY, int[][] field, boolean[] used, ColorPanel[][] solution) {
+        JPanel solveButton = new JPanel();
+        ActionListener solverAction = getSolverAction(solution, field, used);
+        UiUtil.setSolveButtonProperties(BUTTON_SIZE, buttonX, buttonY, solveButton, solverAction);
+        return solveButton;
     }
 
     public static void main(String[] args) {
@@ -191,25 +167,25 @@ public class twoDim {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         //3. Create components and put them in the frame.
-        frame.setBackground(new Color(255, 255, 255));
+        frame.setBackground(ColorPanel.WHITE);
         frame.setLayout(null);
 
-        int[][] field = new int[10][];
-        colorPanel[][] solution = new colorPanel[10][];
-        for (int s = 0; s < 10; s++) {
-            field[s] = new int[10 - s];
-            solution[s] = new colorPanel[10 - s];
-            for (int t = 0; s + t < 10; t++) {
-                solution[s][t] = makeButton(420 + (t - s) * 40, 70 + (t + s) * 40, field, s, t);
+        int[][] field = new int[TRIANGLE_BOARD_WIDTH][];
+        ColorPanel[][] solution = new ColorPanel[TRIANGLE_BOARD_WIDTH][];
+        for (int s = 0; s < TRIANGLE_BOARD_WIDTH; s++) {
+            field[s] = new int[TRIANGLE_BOARD_WIDTH - s];
+            solution[s] = new ColorPanel[TRIANGLE_BOARD_WIDTH - s];
+            for (int t = 0; s + t < TRIANGLE_BOARD_WIDTH; t++) {
+                solution[s][t] = makeToggleableButton(420 + (t - s) * BUTTON_SIZE, 70 + (t + s) * BUTTON_SIZE, field, s, t);
                 frame.add(solution[s][t]);
             }
         }
         boolean[] used = new boolean[SHAPES_ON_BOARD.length];
         for (int i = 0; i < SHAPES_ON_BOARD.length; i++) {
-            frame.add(makeSelection(30 + i * 60, 490, used, i));
+            frame.add(UiUtil.makeSelection(BUTTON_SIZE,30 + i * 60, 490, used, i));
         }
 
-        frame.add(solveButton(760, 490, field, used, solution));
+        frame.add(makeSolveButton(760, 490, field, used, solution));
 
         //4. Size the frame.
         frame.pack();
