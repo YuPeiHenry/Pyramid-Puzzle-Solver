@@ -16,7 +16,7 @@ public class ColorPanel extends JPanel {
     public static final Color BLACK = new Color(0, 0, 0);
 
     private boolean isOn = false;
-    private Color color;
+    private Color color = WHITE;
 
     public void setColor(Color color) {
         this.color = color;
@@ -49,7 +49,7 @@ public class ColorPanel extends JPanel {
             g2d.setColor(BLACK);
         }
         g2d.fill(circle);
-        g2d.setColor(new Color(0, 0, 0));
+        g2d.setColor(BLACK);
         g2d.setStroke(new BasicStroke(3));
         g2d.draw(circle);
     }
