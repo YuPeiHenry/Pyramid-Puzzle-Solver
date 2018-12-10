@@ -16,7 +16,7 @@ import PyramidPuzzleSolver.ColorPanel;
  */
 public class UiUtil {
 
-    public static ColorPanel makeSelection(int buttonSize, int buttonX, int buttonY, boolean[] used, int i) {
+    public static ColorPanel makeSelectionButton(int buttonSize, int buttonX, int buttonY, boolean[] used, int i) {
         ColorPanel result = new ColorPanel();
         result.setNodeIsOn(true);
         result.setColor(SHAPES_ON_BOARD[i].getColor());

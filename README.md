@@ -8,7 +8,7 @@ If you are only interest in using the solver:
 After attempting to solve any puzzle, the solver should be restarted.)  
 Below is an example of a 2D puzzle.  
 <img src="docs/2D_puzzle.jpg" width="250px">  
-Start up twoDim.java. The solver should look like this.  
+Start up twoDimUi.java. The solver should look like this.
 <img src="docs/2D_step_0.jpg" width="250px">  
 First, mark out all blocks that are occupied using Left Click.  
 <img src="docs/2D_step_1.jpg" width="250px">  
@@ -19,7 +19,7 @@ Proceed to press the solve button. The solver should output a solution after som
 2D puzzles are easy, how about the 3D puzzles?  
 Below is an example of a 3D puzzle.  
 <img src="docs/3D_puzzle.jpg" width="250px">  
-Start up threeDim.java. The sholver should look like this.  
+Start up threeDimUi.java. The solver should look like this.
 <img src="docs/3D_step_0.jpg" width="250px">  
 First, mark out all blocks that are occupied using Left Click.  
 <img src="docs/3D_step_1.jpg" width="250px">  
