@@ -2,7 +2,6 @@ package PyramidPuzzleSolver;
 
 import static PyramidPuzzleSolver.Shape.TypesOfShapes.ROTATION;
 import static PyramidPuzzleSolver.Shape.TypesOfShapes.SHAPES_ON_BOARD;
-import static PyramidPuzzleSolver.ThreeDimUi.TUPLE_SIZE;
 
 import PyramidPuzzleSolver.ThreeDUtils.InverseSlice;
 import PyramidPuzzleSolver.ThreeDUtils.Perspective;
@@ -10,6 +9,7 @@ import PyramidPuzzleSolver.ThreeDUtils.Slice;
 import PyramidPuzzleSolver.ThreeDUtils.BottomUp;
 
 public class ThreeDimSolver {
+    public static final int BASE_MINUS_ONE = ThreeDimUi.PYRAMID_BASE_SIZE - 1;
 
     //i = 2 ...
     //      ...
@@ -24,100 +24,52 @@ public class ThreeDimSolver {
     //j = 0 ...
     //j = 1 ...
 
-    public static boolean limitedsolve(int[][][] field, boolean[] used, int[] tuple) {
-        int x = tuple[2], y = tuple[3], z = tuple[1];
-        int slicex = (x + y <= TUPLE_SIZE - z) ? x : x - y;
-        int slicey = (x + y <= TUPLE_SIZE - z) ? y : y - x;
-        int slicez = x + y + z;
-        int Islicex = (x + (TUPLE_SIZE - y) <= TUPLE_SIZE) ? (TUPLE_SIZE - y) - z : (TUPLE_SIZE - y) - z - x;
-        int Islicey = (x + (TUPLE_SIZE - y) <= TUPLE_SIZE) ? x : x - (TUPLE_SIZE - y);
-        int Islicez = x + (TUPLE_SIZE - y);
-        return limitsolveflat(field, used, x, y, z, tuple[0] - 1) ||
-                limitsolveslice(field, used, slicex, slicey, slicez, tuple[0] - 1) ||
-                limitsolveinverseslice(field, used, Islicex, Islicey, Islicez, tuple[0] - 1);
+    /**
+     * Tries to fit a specific piece at a specific position.
+     * There are 3 ways to fit a piece:
+     * Lying flat (BottomUp perspective)
+     * Standing, facing the top left of the board (Slice perspective)
+     * Standing, facing the top right of the board (InvertedSlice perspective)
+     */
+    public static boolean pieceConstraintSolve(int[][][] field, boolean[] used, int shape, int x, int y, int z) {
+        int sliceX = (x + y <= BASE_MINUS_ONE - z) ? x : x - y;
+        int sliceY = (x + y <= BASE_MINUS_ONE - z) ? y : y - x;
+        int sliceZ = x + y + z;
+        int invertedSliceX = (x + (BASE_MINUS_ONE - y) <= BASE_MINUS_ONE) ? (BASE_MINUS_ONE - y) - z : (BASE_MINUS_ONE - y) - z - x;
+        int invertedSliceY = (x + (BASE_MINUS_ONE - y) <= BASE_MINUS_ONE) ? x : x - (BASE_MINUS_ONE - y);
+        int invertedSliceZ = x + (BASE_MINUS_ONE - y);
+        return pieceConstraintSolveFlat(field, used, x, y, z, shape) ||
+                pieceConstraintSolveSlice(field, used, sliceX, sliceY, sliceZ, shape) ||
+                pieceConstraintSolveInverseSlice(field, used, invertedSliceX, invertedSliceY, invertedSliceZ, shape);
     }
 
-    private static boolean limitsolveflat(int[][][] field, boolean[] used, int x, int y, int z, int i) {
-        return limitSolveGivenPerspective(new BottomUp(), field, used, x, y, z, i);
+    private static boolean pieceConstraintSolveFlat(int[][][] field, boolean[] used, int x, int y, int z, int shape) {
+        return pieceConstraintSolveGivenPerspective(new BottomUp(), field, used, x, y, z, shape);
     }
 
-    private static boolean limitsolveslice(int[][][] field, boolean[] used, int x, int y, int z, int i) {
-        return limitSolveGivenPerspective(new Slice(), field, used, x, y, z, i);
+    private static boolean pieceConstraintSolveSlice(int[][][] field, boolean[] used, int x, int y, int z, int shape) {
+        return pieceConstraintSolveGivenPerspective(new Slice(), field, used, x, y, z, shape);
     }
 
-    private static boolean limitsolveinverseslice(int[][][] field, boolean[] used, int x, int y, int z, int i) {
-        return limitSolveGivenPerspective(new InverseSlice(), field, used, x, y, z, i);
+    private static boolean pieceConstraintSolveInverseSlice(int[][][] field, boolean[] used, int x, int y, int z, int shape) {
+        return pieceConstraintSolveGivenPerspective(new InverseSlice(), field, used, x, y, z, shape);
     }
 
-    private static boolean limitSolveGivenPerspective(Perspective perspective, int[][][] field, boolean[] used, int x,
-                                                      int y, int z, int i) {
-        if (used[i]) {
+    private static boolean pieceConstraintSolveGivenPerspective(Perspective perspective, int[][][] field, boolean[] used, int x,
+                                                                int y, int z, int shape) {
+        if (used[shape]) {
             return false;
         }
-        for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-            for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                boolean pass = true;
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
-                        pass = false;
-                        break;
-                    }
-                }
-                if (!pass) {
-                    continue;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    perspective.setNode(field, newX, newY, z, i + 1);
-                }
-                used[i] = true;
-                if (solve(field, used)) {
-                    return true;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    perspective.setNode(field, newX, newY, z, 0);
-                }
-                used[i] = false;
-            }
+        boolean isDefinitelyViable = tryPiece(perspective, field, used, x, y, z, shape, 0, 1);
+        if (isDefinitelyViable) {
+            return true;
         }
-        if (!SHAPES_ON_BOARD[i].getIsXyFlipped()) {
+        if (!SHAPES_ON_BOARD[shape].getIsXyFlippable()) {
             return false;
         }
-        for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-            for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                boolean pass = true;
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
-                        pass = false;
-                        break;
-                    }
-                }
-                if (!pass) {
-                    continue;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    perspective.setNode(field, newX, newY, z, i + 1);
-                }
-                used[i] = true;
-                if (solve(field, used)) {
-                    return true;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    perspective.setNode(field, newX, newY, z, 0);
-                }
-                used[i] = false;
-            }
+        isDefinitelyViable = tryPiece(perspective, field, used, x, y, z, shape, 1, 0);
+        if (isDefinitelyViable) {
+            return true;
         }
         return false;
     }
@@ -141,101 +93,52 @@ public class ThreeDimSolver {
         if (x < 0) {
             return true;
         }
-        int slicex = (x + y <= TUPLE_SIZE - z) ? x : x - y;
-        int slicey = (x + y <= TUPLE_SIZE - z) ? y : y - x;
-        int slicez = x + y + z;
-        int Islicex = (x + (TUPLE_SIZE - y) <= TUPLE_SIZE) ? (TUPLE_SIZE - y) - z : (TUPLE_SIZE - y) - z - x;
-        int Islicey = (x + (TUPLE_SIZE - y) <= TUPLE_SIZE) ? x : x - (TUPLE_SIZE - y);
-        int Islicez = x + (TUPLE_SIZE - y);
-        return solveFlat(field, used, x, y, z) || solveSlice(field, used, slicex, slicey, slicez) ||
-                solveInverseSlice(field, used, Islicex, Islicey, Islicez);
-    }
 
-    private static boolean solveFlat(int[][][] field, boolean[] used, int x, int y, int z) {
-        return solveGivenPerspective(new BottomUp(), field, used, x, y, z);
-    }
-
-    private static boolean solveSlice(int[][][] field, boolean[] used, int x, int y, int z) {
-        return solveGivenPerspective(new Slice(), field, used, x, y, z);
-    }
-
-    private static boolean solveInverseSlice(int[][][] field, boolean[] used, int x, int y, int z) {
-        return solveGivenPerspective(new InverseSlice(), field, used, x, y, z);
-    }
-
-    private static boolean solveGivenPerspective(Perspective perspective, int[][][] field, boolean[] used, int x, int y,
-                                                 int z) {
-        for (int i = 0; i < SHAPES_ON_BOARD.length; i++) {
-            if (used[i]) {
+        for (int shape = 0; shape < SHAPES_ON_BOARD.length; shape++) {
+            if (used[shape]) {
                 continue;
             }
-            for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-                for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                    boolean pass = true;
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
-                            pass = false;
-                            break;
-                        }
-                    }
-                    if (!pass) {
-                        continue;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        perspective.setNode(field, newX, newY, z, i + 1);
-                    }
-                    used[i] = true;
-                    if (solve(field, used)) {
-                        return true;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        perspective.setNode(field, newX, newY, z, 0);
-                    }
-                    used[i] = false;
-                }
-            }
-            if (!SHAPES_ON_BOARD[i].getIsXyFlipped()) {
-                continue;
-            }
-            for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-                for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                    boolean pass = true;
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
-                            pass = false;
-                            break;
-                        }
-                    }
-                    if (!pass) {
-                        continue;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        perspective.setNode(field, newX, newY, z, i + 1);
-                    }
-                    used[i] = true;
-                    if (solve(field, used)) {
-                        return true;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        perspective.setNode(field, newX, newY, z, 0);
-                    }
-                    used[i] = false;
-                }
+            boolean isDefinitelyViable = pieceConstraintSolve(field, used, shape, x, y, z);
+            if (isDefinitelyViable) {
+                return true;
             }
         }
         return false;
     }
 
+    private static boolean tryPiece(Perspective perspective, int[][][] field, boolean[] used, int x,
+                                    int y, int z, int shape, int xIndex, int yIndex) {
+        for (int orient = 0; orient < SHAPES_ON_BOARD[shape].getNumOrients(); orient++) {
+            for (int center = 0; center < SHAPES_ON_BOARD[shape].getNumBlocks(); center++) {
+                boolean pass = true;
+                for (int block = 0; block < SHAPES_ON_BOARD[shape].getNumBlocks(); block++) {
+                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + xIndex);
+                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + yIndex);
+                    if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
+                        pass = false;
+                        break;
+                    }
+                }
+                if (!pass) {
+                    continue;
+                }
+                for (int block = 0; block < SHAPES_ON_BOARD[shape].getNumBlocks(); block++) {
+                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + xIndex);
+                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + yIndex);
+                    perspective.setNode(field, newX, newY, z, shape + 1);
+                }
+                used[shape] = true;
+                if (solve(field, used)) {
+                    return true;
+                }
+                for (int block = 0; block < SHAPES_ON_BOARD[shape].getNumBlocks(); block++) {
+                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + xIndex);
+                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + yIndex);
+                    perspective.setNode(field, newX, newY, z, 0);
+                }
+                used[shape] = false;
+            }
+        }
+        return false;
+    }
 }

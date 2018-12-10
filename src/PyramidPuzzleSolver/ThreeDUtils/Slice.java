@@ -1,6 +1,6 @@
 package PyramidPuzzleSolver.ThreeDUtils;
 
-import static PyramidPuzzleSolver.ThreeDimUi.TUPLE_SIZE;
+import static PyramidPuzzleSolver.ThreeDimSolver.BASE_MINUS_ONE;
 
 /**
  * Represents the pyramid using a view from the top-left corner of bottom-most layer, giving 8 layers.
@@ -20,7 +20,7 @@ public class Slice implements Perspective {
         } else if (z + x + y > 8) {
             return 99;
         } else {
-            return field[8 - z - x - y][z - TUPLE_SIZE + x][z - TUPLE_SIZE + y];
+            return field[8 - z - x - y][z - BASE_MINUS_ONE + x][z - BASE_MINUS_ONE + y];
         }
     }
 
@@ -29,7 +29,7 @@ public class Slice implements Perspective {
         if (z < field.length) {
             field[z - x - y][x][y] = value;
         } else {
-            field[8 - z - x - y][z - TUPLE_SIZE + x][z - TUPLE_SIZE + y] = value;
+            field[8 - z - x - y][z - BASE_MINUS_ONE + x][z - BASE_MINUS_ONE + y] = value;
         }
     }
 }

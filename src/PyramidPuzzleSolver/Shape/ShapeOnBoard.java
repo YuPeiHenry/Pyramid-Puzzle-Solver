@@ -34,7 +34,7 @@ public class ShapeOnBoard {
         return numBlocks;
     }
 
-    public boolean getIsXyFlipped() {
+    public boolean getIsXyFlippable() {
         return isXyFlipped;
     }
 

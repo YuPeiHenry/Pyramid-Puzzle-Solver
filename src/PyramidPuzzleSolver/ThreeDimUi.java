@@ -13,40 +13,44 @@ import static PyramidPuzzleSolver.Shape.TypesOfShapes.SHAPES_ON_BOARD;
 import PyramidPuzzleSolver.Shape.UiUtil;
 
 public class ThreeDimUi {
+    public static final int PYRAMID_BASE_SIZE = 5;
     private static final int BUTTON_SIZE = 30;
-    private static final int PYRAMID_BASE_SIZE = 5;
-    public static final int TUPLE_SIZE = 4;
+    private static final int TUPLE_SIZE = 4;
+    private static final int INDEX_COLOR = 0;
+    private static final int INDEX_X = 1;
+    private static final int INDEX_Y = 2;
+    private static final int INDEX_Z = 3;
 
     private static ColorPanel[][][] solution;
 
 
     private static ActionListener getToggleAction(ColorPanel toggleableButton, int[][][] field, int[] tuple,
-                                                  int s, int t, int u) {
+                                                  int x, int y, int z) {
         return new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ColorPanel panel = solution[tuple[1]][tuple[2]][tuple[3]];
+                ColorPanel panel = solution[tuple[INDEX_X]][tuple[INDEX_Y]][tuple[INDEX_Z]];
                 if (panel != toggleableButton) {
                     toggleableButton.setColor(panel.getColor());
                     panel.setColor(ColorPanel.WHITE);
                     panel.repaint();
-                    tuple[1] = s;
-                    tuple[2] = t;
-                    tuple[3] = u;
+                    tuple[INDEX_X] = x;
+                    tuple[INDEX_Y] = y;
+                    tuple[INDEX_Z] = z;
                 }
                 toggleableButton.toggleNode();
                 toggleableButton.repaint();
-                if (field[s][t][u] == 0) {
-                    field[s][t][u] = 99;
+                if (field[x][y][z] == 0) {
+                    field[x][y][z] = 99;
                 } else {
-                    field[s][t][u] = 0;
+                    field[x][y][z] = 0;
                 }
             }
         };
     }
-    private static ColorPanel makeToggleableButton(int buttonX, int buttonY, int[][][] field, int s, int t, int u, int[] tuple) {
+    private static ColorPanel makeToggleableButton(int buttonX, int buttonY, int[][][] field, int x, int y, int z, int[] tuple) {
         ColorPanel toggleableButton = new ColorPanel();
-        ActionListener toggleAction = getToggleAction(toggleableButton, field, tuple, s, t, u);
+        ActionListener toggleAction = getToggleAction(toggleableButton, field, tuple, x, y, z);
         UiUtil.setToggleableButtonProperties(BUTTON_SIZE, buttonX, buttonY, toggleableButton, toggleAction);
         return toggleableButton;
     }
@@ -66,16 +70,16 @@ public class ThreeDimUi {
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ColorPanel panel = solution[tuple[1]][tuple[2]][tuple[3]];
-                tuple[0]++;
-                if (tuple[0] > SHAPES_ON_BOARD.length) {
-                    tuple[0] = 0;
+                ColorPanel panel = solution[tuple[INDEX_X]][tuple[INDEX_Y]][tuple[INDEX_Z]];
+                tuple[INDEX_COLOR]++;
+                if (tuple[INDEX_COLOR] > SHAPES_ON_BOARD.length) {
+                    tuple[INDEX_COLOR] = 0;
                     result.setNodeIsOn(false);
                     panel.setColor(ColorPanel.WHITE);
                 } else {
                     result.setNodeIsOn(true);
-                    result.setColor(SHAPES_ON_BOARD[tuple[0] - 1].getColor());
-                    panel.setColor(SHAPES_ON_BOARD[tuple[0] - 1].getColor());
+                    result.setColor(SHAPES_ON_BOARD[tuple[INDEX_COLOR] - 1].getColor());
+                    panel.setColor(SHAPES_ON_BOARD[tuple[INDEX_COLOR] - 1].getColor());
                 }
                 result.repaint();
                 panel.repaint();
@@ -87,8 +91,8 @@ public class ThreeDimUi {
     }
 
     private static void tryToSolveWithConstraint(int[][][] field, int[] tuple, boolean[] used) {
-        field[tuple[1]][tuple[2]][tuple[3]] = 0;
-        if (ThreeDimSolver.limitedsolve(field, used, tuple)) {
+        field[tuple[INDEX_X]][tuple[INDEX_Y]][tuple[INDEX_Z]] = 0;
+        if (ThreeDimSolver.pieceConstraintSolve(field, used, tuple[INDEX_COLOR], tuple[INDEX_X], tuple[INDEX_Y], tuple[INDEX_Z])) {
             showSolveSuccess(field);
         } else {
             showSolveFailure();
@@ -105,13 +109,13 @@ public class ThreeDimUi {
 
     private static void showSolveSuccess(int[][][] field) {
         System.out.println("SOLVED");
-        for (int s = 0; s < PYRAMID_BASE_SIZE; s++) {
-            for (int t = 0; s + t < PYRAMID_BASE_SIZE; t++) {
-                for (int u = 0; s + u < PYRAMID_BASE_SIZE; u++) {
-                    if (field[s][t][u] < 99 && field[s][t][u] > 0) {
-                        solution[s][t][u].setColor(SHAPES_ON_BOARD[field[s][t][u] - 1].getColor());
-                        solution[s][t][u].setNodeIsOn(true);
-                        solution[s][t][u].repaint();
+        for (int x = 0; x < PYRAMID_BASE_SIZE; x++) {
+            for (int y = 0; x + y < PYRAMID_BASE_SIZE; y++) {
+                for (int z = 0; x + z < PYRAMID_BASE_SIZE; z++) {
+                    if (field[x][y][z] < 99 && field[x][y][z] > 0) {
+                        solution[x][y][z].setColor(SHAPES_ON_BOARD[field[x][y][z] - 1].getColor());
+                        solution[x][y][z].setNodeIsOn(true);
+                        solution[x][y][z].repaint();
                     }
                 }
             }
@@ -144,15 +148,15 @@ public class ThreeDimUi {
     }
 
     private static void drawPyramid(int[][][] field, int[] tuple, JFrame frame) {
-        for (int s = 0; s < PYRAMID_BASE_SIZE; s++) {
-            field[s] = new int[PYRAMID_BASE_SIZE - s][PYRAMID_BASE_SIZE - s];
-            solution[s] = new ColorPanel[PYRAMID_BASE_SIZE - s][PYRAMID_BASE_SIZE - s];
-            for (int t = 0; s + t < PYRAMID_BASE_SIZE; t++) {
-                for (int u = 0; s + u < PYRAMID_BASE_SIZE; u++) {
-                    solution[s][t][u] = makeToggleableButton(70 + (s + 2 * u) * 15,
-                            40 + ((TUPLE_SIZE - s) * (7 - s) / 2 + t) * BUTTON_SIZE,
-                            field, s, t, u, tuple);
-                    frame.add(solution[s][t][u]);
+        for (int x = 0; x < PYRAMID_BASE_SIZE; x++) {
+            field[x] = new int[PYRAMID_BASE_SIZE - x][PYRAMID_BASE_SIZE - x];
+            solution[x] = new ColorPanel[PYRAMID_BASE_SIZE - x][PYRAMID_BASE_SIZE - x];
+            for (int y = 0; x + y < PYRAMID_BASE_SIZE; y++) {
+                for (int z = 0; x + z < PYRAMID_BASE_SIZE; z++) {
+                    solution[x][y][z] = makeToggleableButton(70 + (x + 2 * z) * 15,
+                            40 + ((TUPLE_SIZE - x) * (7 - x) / 2 + y) * BUTTON_SIZE,
+                            field, x, y, z, tuple);
+                    frame.add(solution[x][y][z]);
                 }
             }
         }

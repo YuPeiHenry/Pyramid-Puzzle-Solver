@@ -26,70 +26,51 @@ public class TwoDimSolver {
             if (used[i]) {
                 continue;
             }
-            for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-                for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                    boolean pass = true;
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        if (newX < 0 || newY < 0 || newX + newY >= field.length || field[newX][newY] > 0) {
-                            pass = false;
-                            break;
-                        }
-                    }
-                    if (!pass) {
-                        continue;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        field[newX][newY] = i + 1;
-                    }
-                    used[i] = true;
-                    if (solve(field, used)) {
-                        return true;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        field[newX][newY] = 0;
-                    }
-                    used[i] = false;
-                }
+            boolean isDefinitelyViable = tryPiece(field, used, i, x, y, 0, 1);
+            if (isDefinitelyViable) {
+                return true;
             }
-            if (!SHAPES_ON_BOARD[i].getIsXyFlipped()) {
+            if (!SHAPES_ON_BOARD[i].getIsXyFlippable()) {
                 continue;
             }
-            for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-                for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                    boolean pass = true;
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        if (newX < 0 || newY < 0 || newX + newY >= field.length || field[newX][newY] > 0) {
-                            pass = false;
-                            break;
-                        }
+            isDefinitelyViable = tryPiece(field, used, i, x, y, 1, 0);
+            if (isDefinitelyViable) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean tryPiece(int[][] field, boolean[] used, int i, int x, int y, int xIndex, int yIndex) {
+        for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
+            for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
+                boolean pass = true;
+                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
+                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + xIndex);
+                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + yIndex);
+                    if (newX < 0 || newY < 0 || newX + newY >= field.length || field[newX][newY] > 0) {
+                        pass = false;
+                        break;
                     }
-                    if (!pass) {
-                        continue;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        field[newX][newY] = i + 1;
-                    }
-                    used[i] = true;
-                    if (solve(field, used)) {
-                        return true;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        field[newX][newY] = 0;
-                    }
-                    used[i] = false;
                 }
+                if (!pass) {
+                    continue;
+                }
+                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
+                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + xIndex);
+                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + yIndex);
+                    field[newX][newY] = i + 1;
+                }
+                used[i] = true;
+                if (solve(field, used)) {
+                    return true;
+                }
+                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
+                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + xIndex);
+                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + yIndex);
+                    field[newX][newY] = 0;
+                }
+                used[i] = false;
             }
         }
         return false;
