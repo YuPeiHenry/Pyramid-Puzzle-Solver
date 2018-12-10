@@ -4,6 +4,11 @@ import static PyramidPuzzleSolver.Shape.TypesOfShapes.ROTATION;
 import static PyramidPuzzleSolver.Shape.TypesOfShapes.SHAPES_ON_BOARD;
 import static PyramidPuzzleSolver.ThreeDimUi.TUPLE_SIZE;
 
+import PyramidPuzzleSolver.ThreeDUtils.InverseSlice;
+import PyramidPuzzleSolver.ThreeDUtils.Perspective;
+import PyramidPuzzleSolver.ThreeDUtils.Slice;
+import PyramidPuzzleSolver.ThreeDUtils.BottomUp;
+
 public class ThreeDimSolver {
 
     //i = 2 ...
@@ -33,150 +38,19 @@ public class ThreeDimSolver {
     }
 
     private static boolean limitsolveflat(int[][][] field, boolean[] used, int x, int y, int z, int i) {
-        if (used[i]) {
-            return false;
-        }
-        for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-            for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                boolean pass = true;
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center,block * 2 + 1);
-                    if (newX < 0 || newY < 0 || newX + z >= field.length || newY + z >= field.length || field[z][newX][newY] > 0) {
-                        pass = false;
-                        break;
-                    }
-                }
-                if (!pass) {
-                    continue;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    field[z][newX][newY] = i + 1;
-                }
-                used[i] = true;
-                if (solve(field, used)) {
-                    return true;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    field[z][newX][newY] = 0;
-                }
-                used[i] = false;
-            }
-        }
-        if (!SHAPES_ON_BOARD[i].getIsXyFlipped()) {
-            return false;
-        }
-        for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-            for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                boolean pass = true;
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    if (newX < 0 || newY < 0 || newX + z >= field.length || newY + z >= field.length || field[z][newX][newY] > 0) {
-                        pass = false;
-                        break;
-                    }
-                }
-                if (!pass) {
-                    continue;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    field[z][newX][newY] = i + 1;
-                }
-                used[i] = true;
-                if (solve(field, used)) {
-                    return true;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    field[z][newX][newY] = 0;
-                }
-                used[i] = false;
-            }
-        }
-        return false;
+        return limitSolveGivenPerspective(new BottomUp(), field, used, x, y, z, i);
     }
 
     private static boolean limitsolveslice(int[][][] field, boolean[] used, int x, int y, int z, int i) {
-        if (used[i]) {
-            return false;
-        }
-        for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-            for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                boolean pass = true;
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    if (newX < 0 || newY < 0 || newX + newY > z || getslice(field, z, newX, newY) > 0) {
-                        pass = false;
-                        break;
-                    }
-                }
-                if (!pass) {
-                    continue;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    setslice(field, z, newX, newY, i + 1);
-                }
-                used[i] = true;
-                if (solve(field, used)) {
-                    return true;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    setslice(field, z, newX, newY, 0);
-                }
-                used[i] = false;
-            }
-        }
-        if (!SHAPES_ON_BOARD[i].getIsXyFlipped()) {
-            return false;
-        }
-        for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-            for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                boolean pass = true;
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    if (newX < 0 || newY < 0 || newX + newY > z || getslice(field, z, newX, newY) > 0) {
-                        pass = false;
-                        break;
-                    }
-                }
-                if (!pass) {
-                    continue;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    setslice(field, z, newX, newY, i + 1);
-                }
-                used[i] = true;
-                if (solve(field, used)) {
-                    return true;
-                }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                    int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    setslice(field, z, newX, newY, 0);
-                }
-                used[i] = false;
-            }
-        }
-        return false;
+        return limitSolveGivenPerspective(new Slice(), field, used, x, y, z, i);
     }
 
     private static boolean limitsolveinverseslice(int[][][] field, boolean[] used, int x, int y, int z, int i) {
+        return limitSolveGivenPerspective(new InverseSlice(), field, used, x, y, z, i);
+    }
+
+    private static boolean limitSolveGivenPerspective(Perspective perspective, int[][][] field, boolean[] used, int x,
+                                                      int y, int z, int i) {
         if (used[i]) {
             return false;
         }
@@ -186,7 +60,7 @@ public class ThreeDimSolver {
                 for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                     int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                     int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    if (newX < 0 || newY < 0 || newX + newY > z || getinverseslice(field, z, newX, newY) > 0) {
+                    if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
                         pass = false;
                         break;
                     }
@@ -197,7 +71,7 @@ public class ThreeDimSolver {
                 for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                     int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                     int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    setinverseslice(field, z, newX, newY, i + 1);
+                    perspective.setNode(field, newX, newY, z, i + 1);
                 }
                 used[i] = true;
                 if (solve(field, used)) {
@@ -206,7 +80,7 @@ public class ThreeDimSolver {
                 for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                     int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                     int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    setinverseslice(field, z, newX, newY, 0);
+                    perspective.setNode(field, newX, newY, z, 0);
                 }
                 used[i] = false;
             }
@@ -220,7 +94,7 @@ public class ThreeDimSolver {
                 for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                     int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                     int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    if (newX < 0 || newY < 0 || newX + newY > z || getinverseslice(field, z, newX, newY) > 0) {
+                    if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
                         pass = false;
                         break;
                     }
@@ -231,7 +105,7 @@ public class ThreeDimSolver {
                 for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                     int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                     int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    setinverseslice(field, z, newX, newY, i + 1);
+                    perspective.setNode(field, newX, newY, z, i + 1);
                 }
                 used[i] = true;
                 if (solve(field, used)) {
@@ -240,7 +114,7 @@ public class ThreeDimSolver {
                 for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                     int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                     int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                    setinverseslice(field, z, newX, newY, 0);
+                    perspective.setNode(field, newX, newY, z, 0);
                 }
                 used[i] = false;
             }
@@ -273,11 +147,24 @@ public class ThreeDimSolver {
         int Islicex = (x + (TUPLE_SIZE - y) <= TUPLE_SIZE) ? (TUPLE_SIZE - y) - z : (TUPLE_SIZE - y) - z - x;
         int Islicey = (x + (TUPLE_SIZE - y) <= TUPLE_SIZE) ? x : x - (TUPLE_SIZE - y);
         int Islicez = x + (TUPLE_SIZE - y);
-        return solveflat(field, used, x, y, z) || solveslice(field, used, slicex, slicey, slicez) ||
-                solveinverseslice(field, used, Islicex, Islicey, Islicez);
+        return solveFlat(field, used, x, y, z) || solveSlice(field, used, slicex, slicey, slicez) ||
+                solveInverseSlice(field, used, Islicex, Islicey, Islicez);
     }
 
-    private static boolean solveflat(int[][][] field, boolean[] used, int x, int y, int z) {
+    private static boolean solveFlat(int[][][] field, boolean[] used, int x, int y, int z) {
+        return solveGivenPerspective(new BottomUp(), field, used, x, y, z);
+    }
+
+    private static boolean solveSlice(int[][][] field, boolean[] used, int x, int y, int z) {
+        return solveGivenPerspective(new Slice(), field, used, x, y, z);
+    }
+
+    private static boolean solveInverseSlice(int[][][] field, boolean[] used, int x, int y, int z) {
+        return solveGivenPerspective(new InverseSlice(), field, used, x, y, z);
+    }
+
+    private static boolean solveGivenPerspective(Perspective perspective, int[][][] field, boolean[] used, int x, int y,
+                                                 int z) {
         for (int i = 0; i < SHAPES_ON_BOARD.length; i++) {
             if (used[i]) {
                 continue;
@@ -288,7 +175,7 @@ public class ThreeDimSolver {
                     for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                         int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                         int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        if (newX < 0 || newY < 0 || newX + z >= field.length || newY + z >= field.length || field[z][newX][newY] > 0) {
+                        if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
                             pass = false;
                             break;
                         }
@@ -299,7 +186,7 @@ public class ThreeDimSolver {
                     for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                         int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                         int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        field[z][newX][newY] = i + 1;
+                        perspective.setNode(field, newX, newY, z, i + 1);
                     }
                     used[i] = true;
                     if (solve(field, used)) {
@@ -308,7 +195,7 @@ public class ThreeDimSolver {
                     for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                         int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                         int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        field[z][newX][newY] = 0;
+                        perspective.setNode(field, newX, newY, z, 0);
                     }
                     used[i] = false;
                 }
@@ -322,7 +209,7 @@ public class ThreeDimSolver {
                     for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                         int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                         int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        if (newX < 0 || newY < 0 || newX + z >= field.length || newY + z >= field.length || field[z][newX][newY] > 0) {
+                        if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
                             pass = false;
                             break;
                         }
@@ -333,7 +220,7 @@ public class ThreeDimSolver {
                     for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                         int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                         int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        field[z][newX][newY] = i + 1;
+                        perspective.setNode(field, newX, newY, z, i + 1);
                     }
                     used[i] = true;
                     if (solve(field, used)) {
@@ -342,7 +229,7 @@ public class ThreeDimSolver {
                     for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
                         int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
                         int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        field[z][newX][newY] = 0;
+                        perspective.setNode(field, newX, newY, z, 0);
                     }
                     used[i] = false;
                 }
@@ -351,191 +238,4 @@ public class ThreeDimSolver {
         return false;
     }
 
-    private static boolean solveslice(int[][][] field, boolean[] used, int x, int y, int z) {
-        for (int i = 0; i < SHAPES_ON_BOARD.length; i++) {
-            if (used[i]) {
-                continue;
-            }
-            for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-                for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                    boolean pass = true;
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        if (newX < 0 || newY < 0 || newX + newY > z || getslice(field, z, newX, newY) > 0) {
-                            pass = false;
-                            break;
-                        }
-                    }
-                    if (!pass) {
-                        continue;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        setslice(field, z, newX, newY, i + 1);
-                    }
-                    used[i] = true;
-                    if (solve(field, used)) {
-                        return true;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        setslice(field, z, newX, newY, 0);
-                    }
-                    used[i] = false;
-                }
-            }
-            if (!SHAPES_ON_BOARD[i].getIsXyFlipped()) {
-                continue;
-            }
-            for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-                for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                    boolean pass = true;
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        if (newX < 0 || newY < 0 || newX + newY > z || getslice(field, z, newX, newY) > 0) {
-                            pass = false;
-                            break;
-                        }
-                    }
-                    if (!pass) {
-                        continue;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        setslice(field, z, newX, newY, i + 1);
-                    }
-                    used[i] = true;
-                    if (solve(field, used)) {
-                        return true;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        setslice(field, z, newX, newY, 0);
-                    }
-                    used[i] = false;
-                }
-            }
-        }
-        return false;
-    }
-
-    private static boolean solveinverseslice(int[][][] field, boolean[] used, int x, int y, int z) {
-        for (int i = 0; i < SHAPES_ON_BOARD.length; i++) {
-            if (used[i]) {
-                continue;
-            }
-            for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-                for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                    boolean pass = true;
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        if (newX < 0 || newY < 0 || newX + newY > z || getinverseslice(field, z, newX, newY) > 0) {
-                            pass = false;
-                            break;
-                        }
-                    }
-                    if (!pass) {
-                        continue;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        setinverseslice(field, z, newX, newY, i + 1);
-                    }
-                    used[i] = true;
-                    if (solve(field, used)) {
-                        return true;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newX = x + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newY = y + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        setinverseslice(field, z, newX, newY, 0);
-                    }
-                    used[i] = false;
-                }
-            }
-            if (!SHAPES_ON_BOARD[i].getIsXyFlipped()) {
-                continue;
-            }
-            for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-                for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                    boolean pass = true;
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        if (newX < 0 || newY < 0 || newX + newY > z || getinverseslice(field, z, newX, newY) > 0) {
-                            pass = false;
-                            break;
-                        }
-                    }
-                    if (!pass) {
-                        continue;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        setinverseslice(field, z, newX, newY, i + 1);
-                    }
-                    used[i] = true;
-                    if (solve(field, used)) {
-                        return true;
-                    }
-                    for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                        int newY = y + ROTATION[orient][0] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2);
-                        int newX = x + ROTATION[orient][1] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + 1);
-                        setinverseslice(field, z, newX, newY, 0);
-                    }
-                    used[i] = false;
-                }
-            }
-        }
-        return false;
-    }
-
-    private static int getslice(int[][][] field, int i, int j, int k) {
-        if (i < field.length) {
-            return field[i - j - k][j][k];
-        } else if (i + j + k > 8) {
-            return 99;
-        } else {
-            return field[8 - i - j - k][i - TUPLE_SIZE + j][i - TUPLE_SIZE + k];
-        }
-    }
-
-    private static void setslice(int[][][] field, int i, int j, int k, int x) {
-        if (i < field.length) {
-            field[i - j - k][j][k] = x;
-        } else {
-            field[8 - i - j - k][i - TUPLE_SIZE + j][i - TUPLE_SIZE + k] = x;
-        }
-    }
-
-    private static int getinverseslice(int[][][] field, int i, int j, int k) {
-        if (i < field.length) {
-            int z = i - j - k;
-            return field[z][k][TUPLE_SIZE - z - j];
-        } else if (i + j + k > 8) {
-            return 99;
-        } else {
-            int z = 8 - i - j - k;
-            return field[z][i - TUPLE_SIZE + k][k];
-        }
-    }
-
-    private static void setinverseslice(int[][][] field, int i, int j, int k, int x) {
-        if (i < field.length) {
-            int z = i - j - k;
-            field[z][k][TUPLE_SIZE - z - j] = x;
-        } else {
-            int z = 8 - i - j - k;
-            field[z][i - TUPLE_SIZE + k][k] = x;
-        }
-    }
 }
