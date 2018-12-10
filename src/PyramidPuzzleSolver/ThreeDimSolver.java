@@ -8,8 +8,12 @@ import PyramidPuzzleSolver.ThreeDUtils.Perspective;
 import PyramidPuzzleSolver.ThreeDUtils.Slice;
 import PyramidPuzzleSolver.ThreeDUtils.BottomUp;
 
+/**
+ * Solves a given 3D puzzle. Method broken into 3 perspectives and symmetry.
+ */
 public class ThreeDimSolver {
     public static final int BASE_MINUS_ONE = ThreeDimUi.PYRAMID_BASE_SIZE - 1;
+    private static final int NO_SHAPE = 0;
 
     //i = 2 ...
     //      ...
@@ -110,35 +114,39 @@ public class ThreeDimSolver {
                                     int y, int z, int shape, int xIndex, int yIndex) {
         for (int orient = 0; orient < SHAPES_ON_BOARD[shape].getNumOrients(); orient++) {
             for (int center = 0; center < SHAPES_ON_BOARD[shape].getNumBlocks(); center++) {
-                boolean pass = true;
-                for (int block = 0; block < SHAPES_ON_BOARD[shape].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + xIndex);
-                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + yIndex);
-                    if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
-                        pass = false;
-                        break;
-                    }
-                }
-                if (!pass) {
+                if (!isWithinBoundary(perspective, field, orient, center, shape, x, y, z, xIndex, yIndex)) {
                     continue;
                 }
-                for (int block = 0; block < SHAPES_ON_BOARD[shape].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + xIndex);
-                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + yIndex);
-                    perspective.setNode(field, newX, newY, z, shape + 1);
-                }
+                fillShape(perspective, field, orient, center, shape, x, y, z, xIndex, yIndex, shape + 1);
                 used[shape] = true;
                 if (solve(field, used)) {
                     return true;
                 }
-                for (int block = 0; block < SHAPES_ON_BOARD[shape].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + xIndex);
-                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + yIndex);
-                    perspective.setNode(field, newX, newY, z, 0);
-                }
+                fillShape(perspective, field, orient, center, shape, x, y, z, xIndex, yIndex, NO_SHAPE);
                 used[shape] = false;
             }
         }
         return false;
+    }
+
+    private static boolean isWithinBoundary(Perspective perspective, int[][][] field, int orient, int center, int shape,
+                                         int x, int y, int z, int xIndex, int yIndex) {
+        for (int block = 0; block < SHAPES_ON_BOARD[shape].getNumBlocks(); block++) {
+            int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + xIndex);
+            int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + yIndex);
+            if (perspective.isOutOfBounds(field, newX, newY, z) || perspective.getNode(field, newX, newY, z) > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void fillShape(Perspective perspective, int[][][] field, int orient, int center, int shape,
+                           int x, int y, int z, int xIndex, int yIndex, int value) {
+        for (int block = 0; block < SHAPES_ON_BOARD[shape].getNumBlocks(); block++) {
+            int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + xIndex);
+            int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + yIndex);
+            perspective.setNode(field, newX, newY, z, value);
+        }
     }
 }

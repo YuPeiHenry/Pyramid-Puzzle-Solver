@@ -10,6 +10,9 @@ import static PyramidPuzzleSolver.Shape.TypesOfShapes.SHAPES_ON_BOARD;
 
 import PyramidPuzzleSolver.Shape.UiUtil;
 
+/**
+ * Draws the UI for the 2D puzzle.
+ */
 public class TwoDimUi {
     private static final int BUTTON_SIZE = 40;
     private static final int TRIANGLE_BOARD_WIDTH = 10;

@@ -12,6 +12,9 @@ import static PyramidPuzzleSolver.Shape.TypesOfShapes.SHAPES_ON_BOARD;
 
 import PyramidPuzzleSolver.Shape.UiUtil;
 
+/**
+ * Draws the UI for the 3D puzzle.
+ */
 public class ThreeDimUi {
     public static final int PYRAMID_BASE_SIZE = 5;
     private static final int BUTTON_SIZE = 30;

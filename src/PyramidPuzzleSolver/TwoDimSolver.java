@@ -3,7 +3,12 @@ package PyramidPuzzleSolver;
 import static PyramidPuzzleSolver.Shape.TypesOfShapes.ROTATION;
 import static PyramidPuzzleSolver.Shape.TypesOfShapes.SHAPES_ON_BOARD;
 
+/**
+ * Solves a given 2D puzzle. Method broken into symmetry.
+ */
 public class TwoDimSolver {
+    private static final int NO_SHAPE = 0;
+
     //i = 0 ...
     //i = 1 ..
     //i = 2 .
@@ -22,18 +27,18 @@ public class TwoDimSolver {
         if (x < 0) {
             return true;
         }
-        for (int i = 0; i < SHAPES_ON_BOARD.length; i++) {
-            if (used[i]) {
+        for (int shape = 0; shape < SHAPES_ON_BOARD.length; shape++) {
+            if (used[shape]) {
                 continue;
             }
-            boolean isDefinitelyViable = tryPiece(field, used, i, x, y, 0, 1);
+            boolean isDefinitelyViable = tryPiece(field, used, shape, x, y, 0, 1);
             if (isDefinitelyViable) {
                 return true;
             }
-            if (!SHAPES_ON_BOARD[i].getIsXyFlippable()) {
+            if (!SHAPES_ON_BOARD[shape].getIsXyFlippable()) {
                 continue;
             }
-            isDefinitelyViable = tryPiece(field, used, i, x, y, 1, 0);
+            isDefinitelyViable = tryPiece(field, used, shape, x, y, 1, 0);
             if (isDefinitelyViable) {
                 return true;
             }
@@ -41,38 +46,42 @@ public class TwoDimSolver {
         return false;
     }
 
-    private static boolean tryPiece(int[][] field, boolean[] used, int i, int x, int y, int xIndex, int yIndex) {
-        for (int orient = 0; orient < SHAPES_ON_BOARD[i].getNumOrients(); orient++) {
-            for (int center = 0; center < SHAPES_ON_BOARD[i].getNumBlocks(); center++) {
-                boolean pass = true;
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + xIndex);
-                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + yIndex);
-                    if (newX < 0 || newY < 0 || newX + newY >= field.length || field[newX][newY] > 0) {
-                        pass = false;
-                        break;
-                    }
-                }
-                if (!pass) {
+    private static boolean tryPiece(int[][] field, boolean[] used, int shape, int x, int y, int xIndex, int yIndex) {
+        for (int orient = 0; orient < SHAPES_ON_BOARD[shape].getNumOrients(); orient++) {
+            for (int center = 0; center < SHAPES_ON_BOARD[shape].getNumBlocks(); center++) {
+                if (!isWithinBoundary(field, orient, center, shape, x, y, xIndex, yIndex)) {
                     continue;
                 }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + xIndex);
-                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + yIndex);
-                    field[newX][newY] = i + 1;
-                }
-                used[i] = true;
+                fillShape(field, orient, center, shape, x, y, xIndex, yIndex, shape + 1);
+                used[shape] = true;
                 if (solve(field, used)) {
                     return true;
                 }
-                for (int block = 0; block < SHAPES_ON_BOARD[i].getNumBlocks(); block++) {
-                    int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + xIndex);
-                    int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[i].getBlockOffset(center, block * 2 + yIndex);
-                    field[newX][newY] = 0;
-                }
-                used[i] = false;
+                fillShape(field, orient, center, shape, x, y, xIndex, yIndex, NO_SHAPE);
+                used[shape] = false;
             }
         }
         return false;
+    }
+
+    private static boolean isWithinBoundary(int[][] field, int orient, int center, int shape, int x, int y,
+                                            int xIndex, int yIndex) {
+        for (int block = 0; block < SHAPES_ON_BOARD[shape].getNumBlocks(); block++) {
+            int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + xIndex);
+            int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + yIndex);
+            if (newX < 0 || newY < 0 || newX + newY >= field.length || field[newX][newY] > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void fillShape(int[][] field, int orient, int center, int shape, int x, int y,
+                                  int xIndex, int yIndex, int value) {
+        for (int block = 0; block < SHAPES_ON_BOARD[shape].getNumBlocks(); block++) {
+            int newX = x + ROTATION[orient][xIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + xIndex);
+            int newY = y + ROTATION[orient][yIndex] * SHAPES_ON_BOARD[shape].getBlockOffset(center, block * 2 + yIndex);
+            field[newX][newY] = value;
+        }
     }
 }
